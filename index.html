@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Autocomplete</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+            integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    <style>
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+        }
+
+        .autocomplete input {
+            width: 400px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e4e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .autocomplete ul {
+            position: absolute;
+            width: 100%;
+            margin-top: 8px;
+            padding: 0;
+            list-style: none;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #e4e7eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+
+        .autocomplete li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .autocomplete li strong {
+            font-weight: bold;
+        }
+
+        .autocomplete li:hover {
+            background-color: #f5f7fa;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="flex  mt-12 justify-center h-screen">
+    <div class="autocomplete">
+        <input id="searchInput" type="text" placeholder="Search" autocomplete="off" class="bg-white">
+        <ul id="suggestionList"></ul>
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const suggestionList = document.getElementById('suggestionList');
+
+    searchInput.addEventListener('input', function() {
+        const prefix = searchInput.value;
+
+        if (prefix.length > 0) {
+            axios.get('/autocomplete', { params: { prefix } })
+                .then(function(response) {
+                    const suggestions = response.data.suggestions;
+
+                    let html = '';
+                    for (const suggestion of suggestions) {
+                        const suggestionHtml = suggestion.replace(
+                            new RegExp(`(${prefix})`, 'gi'),
+                            '<strong>$1</strong>'
+                        );
+                        html += `<li>${suggestionHtml}</li>`;
+                    }
+
+                    suggestionList.innerHTML = html;
+                    suggestionList.style.display = 'block';
+                })
+                .catch(function(error) {
+                    console.error(error);
+                });
+        } else {
+            suggestionList.innerHTML = '';
+            suggestionList.style.display = 'none';
+        }
+    });
+
+    suggestionList.addEventListener('click', function(event) {
+        const selectedSuggestion = event.target.innerText;
+        searchInput.value = selectedSuggestion;
+        suggestionList.innerHTML = '';
+        suggestionList.style.display = 'none';
+    });
+</script>
+</body>
+</html>
